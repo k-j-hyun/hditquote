@@ -1,0 +1,29 @@
+관리자 List
+1.이름 : 양진우
+id : hditadmin
+ps : hditsmart
+
+2.이름 : 전종원
+id : hditadmin01
+ps : hditsmart
+
+3.이름 : 박진호
+id : hditadmin02
+ps : hditsmart
+
+직원 List
+1.이름 : 고정현
+id : hdit01
+ps : 1111
+
+2.이름 : 김성규
+id : hdit02
+ps : 1111
+
+3.이름 : 최민우
+id : hdit03
+ps : 1111
+
+4.이름 : CX매니저
+id : hditimployee
+ps : 1111

@@ -1,11 +1,33 @@
 // 현대아이티 견적 시스템 - 공통 데이터 & 유틸리티
 
+const DEFAULT_ACCOUNTS = [
+  // 관리자
+  { id: 'hditadmin',   password: 'hditsmart', name: '양진우',   role: 'admin',    createdAt: '2026-01-01T00:00:00.000Z', createdBy: 'system' },
+  { id: 'hditadmin01', password: 'hditsmart', name: '전종원',   role: 'admin',    createdAt: '2026-01-01T00:00:00.000Z', createdBy: 'system' },
+  { id: 'hditadmin02', password: 'hditsmart', name: '박진호',   role: 'admin',    createdAt: '2026-01-01T00:00:00.000Z', createdBy: 'system' },
+  // 직원
+  { id: 'hdit01',       password: '1111',     name: '고정현',   role: 'employee', createdAt: '2026-01-01T00:00:00.000Z', createdBy: 'system' },
+  { id: 'hdit02',       password: '1111',     name: '김성규',   role: 'employee', createdAt: '2026-01-01T00:00:00.000Z', createdBy: 'system' },
+  { id: 'hdit03',       password: '1111',     name: '최민우',   role: 'employee', createdAt: '2026-01-01T00:00:00.000Z', createdBy: 'system' },
+  { id: 'hditimployee', password: '1111',     name: 'CX매니저', role: 'employee', createdAt: '2026-01-01T00:00:00.000Z', createdBy: 'system' }
+];
+
 (function initSystem() {
-  if (!localStorage.getItem('hdit_users')) {
-    localStorage.setItem('hdit_users', JSON.stringify([
-      { id: 'hditadmin', password: 'hditsmart', name: '관리자', role: 'admin', createdAt: new Date().toISOString(), createdBy: 'system' }
-    ]));
-  }
+  // Always upsert DEFAULT_ACCOUNTS so they work on any device
+  const users = JSON.parse(localStorage.getItem('hdit_users') || '[]');
+  DEFAULT_ACCOUNTS.forEach(function(def) {
+    const idx = users.findIndex(function(u) { return u.id === def.id; });
+    if (idx === -1) {
+      users.push(def);
+    } else {
+      // Update password/name/role in case defaults changed, but keep createdAt
+      users[idx].password = def.password;
+      users[idx].name = def.name;
+      users[idx].role = def.role;
+    }
+  });
+  localStorage.setItem('hdit_users', JSON.stringify(users));
+
   if (!localStorage.getItem('hdit_logs')) localStorage.setItem('hdit_logs', JSON.stringify([]));
   if (!localStorage.getItem('hdit_quotes')) localStorage.setItem('hdit_quotes', JSON.stringify([]));
   if (!localStorage.getItem('hdit_q_counter')) localStorage.setItem('hdit_q_counter', '0');
