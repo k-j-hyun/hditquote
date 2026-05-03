@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>견적서 작성 — 현대아이티</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="topnav">
+  <div class="nav-brand">
+    <span class="nav-brand-main">현대아이티</span>
+    <span class="nav-brand-sub">HYUNDAI IT · 스마트보드 렌탈</span>
+  </div>
+  <div class="topnav-right">
+    <button class="btn-logout" onclick="openHistory()" style="background:rgba(255,255,255,0.18);border-color:rgba(255,255,255,0.35)">📋 내 견적 이력</button>
+    <span class="topnav-user">담당: <strong id="navUserName"></strong></span>
+    <button class="btn-logout" onclick="logout()">로그아웃</button>
+  </div>
+</nav>
+
+<!-- 견적 이력 모달 -->
+<div class="modal-backdrop" id="historyModal" onclick="if(event.target===this)closeHistory()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>📋 견적 이력</h3>
+      <button class="modal-close" onclick="closeHistory()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="historyContent"></div>
+    </div>
+  </div>
+</div>
+
+<div class="sales-wrap">
+
+  <!-- ===== LEFT PANEL ===== -->
+  <div class="panel-left">
+
+    <!-- 직원 체크리스트 (직원 전용) -->
+    <div class="emp-banner" id="empBanner" style="display:none">
+      <div class="emp-banner-title">💡 영업 전 체크리스트</div>
+      <div class="emp-check">
+        <div class="emp-check-box"><div class="emp-check-box-inner"></div></div>
+        <span class="emp-check-text">고객님이 가장 고민하시는 부분은 체크하셨나요?</span>
+      </div>
+      <div class="emp-check">
+        <div class="emp-check-box"><div class="emp-check-box-inner"></div></div>
+        <span class="emp-check-text">고객님의 상황에 가장 알맞은 제품을 추천하셨나요?</span>
+      </div>
+    </div>
+
+    <!-- 고객 정보 -->
+    <div class="section-card">
+      <div class="section-title">고객 정보</div>
+      <div class="form-group">
+        <label>고객명</label>
+        <input type="text" class="form-input" id="customerName" placeholder="고객 성함" oninput="state.customerName=this.value;renderQuote()">
+      </div>
+      <div class="form-group">
+        <label>업체명 <span style="color:#bbb;font-weight:400">(선택)</span></label>
+        <input type="text" class="form-input" id="customerCompany" placeholder="업체명 / 학교명" oninput="state.customerCompany=this.value;renderQuote()">
+      </div>
+      <div class="form-group">
+        <label>생년월일</label>
+        <input type="text" class="form-input" id="birthdate" placeholder="예) 1990-01-01" oninput="state.birthdate=this.value;renderQuote()">
+      </div>
+      <div class="form-group">
+        <label>이메일 <span style="color:#bbb;font-weight:400">(계약서·세금계산서)</span></label>
+        <input type="email" class="form-input" id="email" placeholder="example@email.com" oninput="state.email=this.value;renderQuote()">
+      </div>
+      <div class="form-group">
+        <label>설치 주소</label>
+        <input type="text" class="form-input" id="address" placeholder="설치받으실 주소를 입력해주세요" oninput="state.address=this.value;renderQuote()">
+      </div>
+      <div class="form-group">
+        <label>엘리베이터</label>
+        <div class="radio-group">
+          <div class="radio-btn">
+            <input type="radio" name="elevator" id="elevNone" value="" checked>
+            <label for="elevNone">미선택</label>
+          </div>
+          <div class="radio-btn">
+            <input type="radio" name="elevator" id="elevYes" value="있음" onchange="state.elevator=this.value;renderQuote()">
+            <label for="elevYes">있음</label>
+          </div>
+          <div class="radio-btn">
+            <input type="radio" name="elevator" id="elevNo" value="없음" onchange="state.elevator=this.value;renderQuote()">
+            <label for="elevNo">없음</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 결제방식 -->
+    <div class="section-card">
+      <div class="section-title">결제방식</div>
+      <div class="radio-group">
+        <div class="radio-btn">
+          <input type="radio" name="payType" id="payRental" value="rental" checked>
+          <label for="payRental">렌탈</label>
+        </div>
+        <div class="radio-btn">
+          <input type="radio" name="payType" id="payLump" value="lumpsum">
+          <label for="payLump">일시불</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 제품 선택 -->
+    <div class="section-card">
+      <div class="section-title">제품 선택</div>
+      <div class="form-group">
+        <label>시리즈</label>
+        <select class="form-select" id="seriesSelect" onchange="onSeriesChange()">
+          <option value="">시리즈 선택</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>모델</label>
+        <select class="form-select" id="modelSelect" onchange="onModelChange()" disabled>
+          <option value="">모델 선택</option>
+        </select>
+      </div>
+      <div class="form-group" id="optionRow" style="display:none">
+        <label>설치 옵션</label>
+        <select class="form-select" id="optionSelect" onchange="onOptionChange()">
+          <option value="벽걸이">벽걸이형</option>
+        </select>
+      </div>
+      <div class="form-group" id="lumpsumStandRow" style="display:none">
+        <label>스탠드 옵션</label>
+        <select class="form-select" id="lumpsumStandSelect" onchange="onLumpsumStandChange()">
+          <option value="none">없음 (벽걸이만)</option>
+          <option value="선반스탠드">선반스탠드 (+440,000원)</option>
+          <option value="전동스탠드">전동스탠드 (+770,000원)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 렌탈 조건 -->
+    <div class="section-card" id="rentalSection">
+      <div class="section-title">렌탈 조건</div>
+      <div class="form-group" id="depositRow" style="display:none">
+        <label>선납금</label>
+        <select class="form-select" id="depositSelect" onchange="onDepositChange()" disabled>
+          <option value="">선납금 선택</option>
+        </select>
+      </div>
+      <div class="form-group" id="monthsRow" style="display:none">
+        <label>계약기간</label>
+        <select class="form-select" id="monthsSelect" onchange="onMonthsChange()" disabled>
+          <option value="">개월 선택</option>
+        </select>
+      </div>
+      <div id="rentalHint" style="color:#aaa;font-size:12px;text-align:center;padding:8px 0">제품을 먼저 선택해주세요</div>
+    </div>
+
+    <!-- 수량 -->
+    <div class="section-card">
+      <div class="section-title">수량</div>
+      <div class="qty-control">
+        <button class="qty-btn" onclick="changeQty(-1)">−</button>
+        <span class="qty-display" id="qtyDisplay">1</span>
+        <button class="qty-btn" onclick="changeQty(1)">+</button>
+        <span style="font-size:12px;color:#888;margin-left:2px">대</span>
+      </div>
+      <div class="qty-note" id="qtyNote">2대 이상 구매 — 선납금에서 10만원 추가 할인</div>
+    </div>
+
+    <!-- 프로모션 -->
+    <div class="section-card">
+      <div class="section-title">프로모션 할인 <span style="font-size:10px;font-weight:400;color:#aaa">(중복 선택 가능)</span></div>
+      <div class="check-list" id="promoList"></div>
+      <div class="promo-note" id="promoNote">프로모션 적용 — 선납금에서 10만원 할인 (중복 시에도 고정)</div>
+    </div>
+
+    <!-- 추가증정 -->
+    <div class="section-card">
+      <div class="section-title">추가증정</div>
+      <div class="check-list" id="freebieList"></div>
+    </div>
+
+  </div><!-- /panel-left -->
+
+  <!-- ===== RIGHT PANEL ===== -->
+  <div class="panel-right">
+    <div class="quote-preview quote-printable" id="quotePreview">
+
+      <div class="quote-header">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="q-header-icon">H</div>
+          <div>
+            <div class="q-brand-main">현대아이티</div>
+            <div class="q-brand-sub">HYUNDAI IT · 스마트보드 렌탈</div>
+          </div>
+        </div>
+        <div class="quote-header-info">
+          <div class="quote-id-text" id="qId">견적서</div>
+          <div id="qDate"></div>
+          <div id="qManager"></div>
+        </div>
+      </div>
+
+      <div id="quoteHeroWrap"></div>
+
+      <div class="quote-body" id="quoteBody">
+        <div class="quote-empty">
+          <div class="icon">📋</div>
+          <p>좌측에서 제품을 선택하면<br>견적이 자동으로 표시됩니다</p>
+        </div>
+      </div>
+
+      <div class="quote-value">
+        <div class="quote-value-title">현대아이티만의 차별화 가치</div>
+        <div class="value-list">
+          <div class="value-item">
+            <span class="value-icon">⚡</span>
+            <div class="value-text"><strong>판서반응속도 1.8ms</strong>업계 최고 수준의 반응속도</div>
+          </div>
+          <div class="value-item">
+            <span class="value-icon">💎</span>
+            <div class="value-text"><strong>RPGLASS 기술</strong>빛반사·번짐·플리커 현상 없음<br>밝은 환경에서도 선명한 화질</div>
+          </div>
+          <div class="value-item">
+            <span class="value-icon">🛡️</span>
+            <div class="value-text"><strong>무상 AS 3년</strong>업계 최고 수준 보증 기간</div>
+          </div>
+          <div class="value-item">
+            <span class="value-icon">👑</span>
+            <div class="value-text"><strong>컨시어지 서비스</strong>6개월마다 CX매니저 방문<br>펌웨어·AS·사용법 지원</div>
+          </div>
+          <div class="value-item">
+            <span class="value-icon">🔄</span>
+            <div class="value-text"><strong>렌탈 종료 후에도 지원</strong>지속적인 펌웨어 업데이트 관리</div>
+          </div>
+          <div class="value-item">
+            <span class="value-icon">🏆</span>
+            <div class="value-text"><strong>업계 최고 사양</strong>판서속도 1.8ms · RAM 32GB · SSD 512GB</div>
+          </div>
+        </div>
+        <div class="value-made-in">
+          <div class="value-made-in-badge">🇰🇷 국내 유일 생산</div>
+          <div class="value-events">APEC 2025 &nbsp;·&nbsp; 청룡영화제 &nbsp;·&nbsp; 청룡영화상 &nbsp;·&nbsp; 대통령 개표방송 &nbsp;·&nbsp; 서울패션위크</div>
+          <div class="value-stat">드라마 협찬 &nbsp;·&nbsp; 공영방송 뉴스칠판 &nbsp;·&nbsp; 전국 학교 2곳 중 1곳은 현대아이티 전자칠판 사용 중</div>
+        </div>
+      </div>
+
+      <div class="quote-actions" id="quoteActions" style="display:none">
+        <button class="btn-pdf" onclick="exportPDF()"> 견적서 내보내기 (PDF)</button>
+        <button class="btn-save" onclick="saveCurrentQuote()"> 견적 저장</button>
+      </div>
+
+    </div>
+    <div class="page-footer">
+      © 2026 현대아이티. All rights reserved.<br>
+      개발: 전략유통사업본부 &nbsp;|&nbsp; 문의: kjhyun@hyundaiit.com
+    </div>
+  </div>
+
+</div><!-- /sales-wrap -->
+
+<script src="data.js"></script>
+<script>
+const session = requireAuth();
+if (session) {
+  document.getElementById('navUserName').textContent = session.name;
+  if (session.role === 'employee') {
+    document.getElementById('empBanner').style.display = '';
+  }
+}
+
+// ==================== STATE ====================
+const state = {
+  customerName: '', customerCompany: '',
+  paymentType: 'rental',
+  series: '', model: '', optionLabel: '벽걸이',
+  deposit: null, months: null,
+  lumpsumStand: 'none',
+  quantity: 1,
+  promos: new Set(),
+  freebies: new Set()
+};
+
+// ==================== INIT ====================
+function init() {
+  document.querySelectorAll('input[name="payType"]').forEach(r => {
+    r.addEventListener('change', () => { state.paymentType = r.value; onPaymentTypeChange(); });
+  });
+  buildPromoList();
+  buildFreebieList();
+  updateSeriesOptions();
+
+  const now = new Date();
+  document.getElementById('qDate').textContent = '견적일: ' + now.toLocaleDateString('ko-KR');
+  document.getElementById('qManager').textContent = '담당: ' + (session ? session.name : '');
+}
+
+// ==================== LISTS ====================
+function buildPromoList() {
+  const el = document.getElementById('promoList');
+  PROMOTIONS.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'check-item';
+    div.innerHTML = `<input type="checkbox"><span class="label-text">${p}</span>`;
+    div.addEventListener('click', e => { if (e.target.tagName !== 'INPUT') div.querySelector('input').click(); });
+    div.querySelector('input').addEventListener('change', function() {
+      if (this.checked) state.promos.add(p); else state.promos.delete(p);
+      div.classList.toggle('checked', this.checked);
+      document.getElementById('promoNote').style.display = state.promos.size > 0 ? '' : 'none';
+      renderQuote();
+    });
+    el.appendChild(div);
+  });
+}
+
+function buildFreebieList() {
+  const el = document.getElementById('freebieList');
+  FREEBIES.forEach(f => {
+    const div = document.createElement('div');
+    div.className = 'check-item';
+    div.innerHTML = `<input type="checkbox"><span class="label-text">${f}</span><span class="badge-free">무료</span>`;
+    div.addEventListener('click', e => { if (e.target.tagName !== 'INPUT') div.querySelector('input').click(); });
+    div.querySelector('input').addEventListener('change', function() {
+      if (this.checked) state.freebies.add(f); else state.freebies.delete(f);
+      div.classList.toggle('checked', this.checked);
+      renderQuote();
+    });
+    el.appendChild(div);
+  });
+}
+
+// ==================== CASCADING DROPDOWNS ====================
+function onPaymentTypeChange() {
+  state.series = ''; state.model = ''; state.optionLabel = '벽걸이';
+  state.deposit = null; state.months = null; state.lumpsumStand = 'none';
+  document.getElementById('rentalSection').style.display = state.paymentType === 'rental' ? '' : 'none';
+  updateSeriesOptions();
+  updateModelOptions();
+  hideOptionRow(); hideDepositRow(); hideMonthsRow();
+  hideLumpsumStandRow();
+  renderQuote();
+}
+
+function updateSeriesOptions() {
+  const sel = document.getElementById('seriesSelect');
+  const series = state.paymentType === 'rental' ? Object.keys(RENTAL_SERIES) : Object.keys(LUMPSUM);
+  sel.innerHTML = '<option value="">시리즈 선택</option>';
+  series.forEach(s => { const o = document.createElement('option'); o.value = o.textContent = s; sel.appendChild(o); });
+  sel.value = '';
+}
+
+function onSeriesChange() {
+  state.series = document.getElementById('seriesSelect').value;
+  state.model = ''; state.optionLabel = '벽걸이'; state.deposit = null; state.months = null; state.lumpsumStand = 'none';
+  updateModelOptions();
+  hideOptionRow(); hideDepositRow(); hideMonthsRow(); hideLumpsumStandRow();
+  renderQuote();
+}
+
+function updateModelOptions() {
+  const sel = document.getElementById('modelSelect');
+  sel.innerHTML = '<option value="">모델 선택</option>';
+  if (!state.series) { sel.disabled = true; return; }
+  const models = state.paymentType === 'rental'
+    ? (RENTAL_SERIES[state.series] || [])
+    : Object.keys(LUMPSUM[state.series] || {});
+  models.forEach(m => { const o = document.createElement('option'); o.value = o.textContent = m; sel.appendChild(o); });
+  sel.disabled = false; sel.value = '';
+}
+
+function onModelChange() {
+  state.model = document.getElementById('modelSelect').value;
+  state.optionLabel = '벽걸이'; state.deposit = null; state.months = null; state.lumpsumStand = 'none';
+  if (state.paymentType === 'rental' && state.model && RENTAL[state.model]) {
+    updateOptionRow(); updateDepositRow(); hideMonthsRow(); hideLumpsumStandRow();
+  } else if (state.paymentType === 'lumpsum' && state.model) {
+    hideOptionRow(); hideDepositRow(); hideMonthsRow(); showLumpsumStandRow();
+  } else {
+    hideOptionRow(); hideDepositRow(); hideMonthsRow(); hideLumpsumStandRow();
+  }
+  renderQuote();
+}
+
+function showLumpsumStandRow() {
+  const row = document.getElementById('lumpsumStandRow');
+  row.style.display = '';
+  document.getElementById('lumpsumStandSelect').value = 'none';
+}
+function hideLumpsumStandRow() {
+  document.getElementById('lumpsumStandRow').style.display = 'none';
+  state.lumpsumStand = 'none';
+}
+function onLumpsumStandChange() {
+  state.lumpsumStand = document.getElementById('lumpsumStandSelect').value;
+  renderQuote();
+}
+
+function updateOptionRow() {
+  const sel = document.getElementById('optionSelect');
+  const standLabel = getStandLabel(state.model);
+  sel.innerHTML = `<option value="벽걸이">벽걸이형</option><option value="${standLabel}">+ ${standLabel}</option>`;
+  sel.value = state.optionLabel;
+  document.getElementById('optionRow').style.display = '';
+}
+function hideOptionRow() { document.getElementById('optionRow').style.display = 'none'; }
+
+function onOptionChange() {
+  state.optionLabel = document.getElementById('optionSelect').value;
+  state.deposit = null; state.months = null;
+  updateDepositRow(); hideMonthsRow(); renderQuote();
+}
+
+function updateDepositRow() {
+  const row = document.getElementById('depositRow');
+  const sel = document.getElementById('depositSelect');
+  const deposits = getAvailableDeposits(state.model, state.optionLabel);
+  if (!deposits.length) { row.style.display = 'none'; return; }
+  sel.innerHTML = '<option value="">선납금 선택</option>';
+  deposits.forEach(d => { const o = document.createElement('option'); o.value = d; o.textContent = fmtDeposit(d); sel.appendChild(o); });
+  sel.disabled = false; sel.value = '';
+  row.style.display = '';
+  document.getElementById('rentalHint').style.display = 'none';
+}
+function hideDepositRow() {
+  document.getElementById('depositRow').style.display = 'none';
+  document.getElementById('rentalHint').style.display = '';
+}
+
+function onDepositChange() {
+  const val = document.getElementById('depositSelect').value;
+  state.deposit = val === '' ? null : Number(val);
+  state.months = null;
+  if (state.deposit !== null) updateMonthsRow(); else hideMonthsRow();
+  renderQuote();
+}
+
+function updateMonthsRow() {
+  const row = document.getElementById('monthsRow');
+  const sel = document.getElementById('monthsSelect');
+  const entry = getRentalEntry(state.model, state.optionLabel, state.deposit);
+  if (!entry) { row.style.display = 'none'; return; }
+  sel.innerHTML = '<option value="">개월 선택</option>';
+  entry.months.forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = m + '개월'; sel.appendChild(o); });
+  sel.disabled = false; sel.value = '';
+  row.style.display = '';
+}
+function hideMonthsRow() { document.getElementById('monthsRow').style.display = 'none'; }
+
+function onMonthsChange() {
+  const val = document.getElementById('monthsSelect').value;
+  state.months = val === '' ? null : Number(val);
+  renderQuote();
+}
+
+// ==================== QUANTITY ====================
+function changeQty(delta) {
+  state.quantity = Math.max(1, state.quantity + delta);
+  document.getElementById('qtyDisplay').textContent = state.quantity;
+  document.getElementById('qtyNote').style.display = state.quantity >= 2 ? '' : 'none';
+  renderQuote();
+}
+
+// ==================== QUOTE RENDER ====================
+function getBasePrice() {
+  if (state.paymentType === 'lumpsum') {
+    if (!state.model || !LUMPSUM[state.series]) return null;
+    const p = LUMPSUM[state.series][state.model];
+    if (!p) return null;
+    const standPrice = LUMPSUM_STAND_PRICES[state.lumpsumStand] || 0;
+    return { type: 'lumpsum', price: p, standPrice, standLabel: state.lumpsumStand };
+  }
+  if (!state.model || state.deposit === null || !state.months) return null;
+  const entry = getRentalEntry(state.model, state.optionLabel, state.deposit);
+  if (!entry) return null;
+  const idx = entry.months.indexOf(state.months);
+  if (idx === -1) return null;
+  return { type: 'rental', monthly: entry.prices[idx], total: entry.totals[idx] };
+}
+
+function renderQuote() {
+  const heroWrap = document.getElementById('quoteHeroWrap');
+  const body = document.getElementById('quoteBody');
+  const actions = document.getElementById('quoteActions');
+  const qId = document.getElementById('qId');
+
+  const base = getBasePrice();
+  const promoDisc = state.promos.size > 0 ? 100000 : 0;
+  const qtyDisc = state.quantity >= 2 ? 100000 : 0;
+  const qty = state.quantity;
+
+  // Not enough info yet
+  if (!state.model) {
+    qId.textContent = '견적서';
+    heroWrap.innerHTML = '';
+    body.innerHTML = `<div class="quote-empty"><div class="icon">📋</div><p>좌측에서 제품을 선택하면<br>견적이 자동으로 표시됩니다</p></div>`;
+    actions.style.display = 'none';
+    return;
+  }
+  if (state.paymentType === 'rental' && !base) {
+    heroWrap.innerHTML = '';
+    body.innerHTML = `<div class="quote-empty"><div class="icon">🗓️</div><p>선납금과 계약기간을<br>선택해주세요</p></div>`;
+    actions.style.display = 'none';
+    return;
+  }
+
+  const validUntil = new Date(); validUntil.setDate(validUntil.getDate() + 30);
+  qId.textContent = '견적서 (임시)';
+
+  let hero = '', html = '';
+  const optStr = state.paymentType === 'rental'
+    ? (state.optionLabel !== '벽걸이' ? ` + ${state.optionLabel}` : ' 벽걸이형')
+    : (state.lumpsumStand !== 'none' ? ` + ${state.lumpsumStand}` : ' 벽걸이형');
+  const productLabel = `Samsung ${state.model}${optStr}`;
+
+  // 제품 사양 섹션 (데이터 있는 모델만)
+  function specHtml() {
+    const s = SPECS[state.model];
+    if (!s) return '';
+    return `<div class="quote-section">
+      <div class="quote-section-title">제품 사양</div>
+      <div class="spec-grid">
+        <div class="spec-item full"><span class="spec-key">해상도</span><span class="spec-val">${s.display}</span></div>
+        <div class="spec-item"><span class="spec-key">CPU</span><span class="spec-val">${s.cpu}</span></div>
+        <div class="spec-item"><span class="spec-key">GPU</span><span class="spec-val">${s.gpu}</span></div>
+        <div class="spec-item"><span class="spec-key">RAM</span><span class="spec-val">${s.ram}</span></div>
+        <div class="spec-item"><span class="spec-key">저장장치</span><span class="spec-val">${s.ssd}</span></div>
+        <div class="spec-item"><span class="spec-key">제품 크기</span><span class="spec-val">${s.size}</span></div>
+        <div class="spec-item"><span class="spec-key">무게</span><span class="spec-val">${s.weight}</span></div>
+      </div>
+    </div>`;
+  }
+
+  if (base.type === 'rental') {
+    // ===== RENTAL =====
+    const monthlyPerUnit = base.monthly;
+    const totalMonthly = monthlyPerUnit * qty;
+    const unitTotal = base.total;
+    const grandTotal = unitTotal * qty;
+
+    const depositPerUnit = state.deposit || 0;
+    const depositSubtotal = depositPerUnit * qty;
+    const totalDiscount = promoDisc + qtyDisc;
+    const finalDeposit = Math.max(0, depositSubtotal - totalDiscount);
+
+    // HERO: monthly fee
+    hero = `<div class="quote-hero">
+      <div class="hero-label">월 렌탈료${qty > 1 ? ' (' + qty + '대 합산)' : ''}</div>
+      <div class="hero-amount">${fmtPrice(totalMonthly)}<span class="hero-unit">/월</span></div>
+      <div class="hero-sub">${qty > 1 ? '1대 기준 ' + fmtPrice(monthlyPerUnit) + '/월 &nbsp;·&nbsp; ' : ''}계약기간 ${state.months}개월</div>
+    </div>`;
+
+    // 고객 정보
+    if (state.customerName || state.customerCompany) {
+      html += `<div class="quote-section">
+        <div class="quote-section-title">고객 정보</div>`;
+      if (state.customerName) html += `<div class="quote-row"><span class="ql">고객명</span><span class="qv">${state.customerName}</span></div>`;
+      if (state.customerCompany) html += `<div class="quote-row"><span class="ql">업체명</span><span class="qv">${state.customerCompany}</span></div>`;
+      html += `</div>`;
+    }
+
+    // 제품 정보
+    html += `<div class="quote-section">
+      <div class="quote-section-title">제품 정보</div>
+      <div class="quote-row"><span class="ql">제품명</span><span class="qv">${productLabel}</span></div>
+      <div class="quote-row"><span class="ql">결제방식</span><span class="qv">렌탈 (${fmtDeposit(state.deposit)})</span></div>
+      <div class="quote-row"><span class="ql">계약기간</span><span class="qv">${state.months}개월</span></div>
+      <div class="quote-row"><span class="ql">수량</span><span class="qv">${qty}대</span></div>
+    </div>`;
+    html += specHtml();
+
+    // 선납금 내역 (deposit > 0인 경우만)
+    if (depositPerUnit > 0) {
+      html += `<div class="quote-section">
+        <div class="quote-section-title">선납금 내역</div>
+        <div class="quote-row"><span class="ql">선납금 기본${qty > 1 ? ' (' + qty + '대)' : ''}</span><span class="qv">${fmtPrice(depositSubtotal)}</span></div>`;
+      if (promoDisc > 0) {
+        html += `<div class="quote-row discount">
+          <span class="ql">프로모션 할인 (${[...state.promos][0]}${state.promos.size > 1 ? ' 외 ' + (state.promos.size - 1) + '개' : ''})</span>
+          <span class="qv">−${fmtPrice(promoDisc)}</span>
+        </div>`;
+      }
+      if (qtyDisc > 0) {
+        html += `<div class="quote-row discount"><span class="ql">수량 추가할인 (2대 이상)</span><span class="qv">−${fmtPrice(qtyDisc)}</span></div>`;
+      }
+      html += `</div>`;
+      html += `<div class="deposit-final-box">
+        <span class="dfl">최종 선납금${qty > 1 ? ' (' + qty + '대 합산)' : ''}</span>
+        <span class="dfv">${fmtPrice(finalDeposit)}</span>
+      </div>`;
+    } else if (totalDiscount > 0) {
+      // 선납금 없음인데 할인이 선택된 경우 — 안내
+      html += `<div style="background:#fff8e1;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#795548">
+        선납금 없음 상품은 프로모션·수량 할인이 선납금에 적용되지 않습니다.
+      </div>`;
+    }
+
+    // 추가증정
+    if (state.freebies.size > 0) {
+      html += `<div class="quote-section" style="margin-top:14px">
+        <div class="quote-section-title">추가증정</div>`;
+      [...state.freebies].forEach(f => {
+        html += `<div class="quote-row free-item"><span class="ql">${f}</span><span class="qv">무료 증정</span></div>`;
+      });
+      html += `</div>`;
+    }
+
+    // 적용 프로모션
+    if (state.promos.size > 0) {
+      html += `<div class="promo-tags">${[...state.promos].map(p => `<span class="promo-tag">${p}</span>`).join('')}</div>`;
+    }
+
+    // 총 납입료 참고 (de-emphasized)
+    html += `<div class="quote-ref-box" style="margin-top:16px">
+      <span class="ref-label">총 납입료 참고 (${qty > 1 ? qty + '대 · ' : ''}${state.months}개월)</span>
+      <span class="ref-value">${fmtPrice(grandTotal)}</span>
+    </div>`;
+    if (depositPerUnit > 0 && totalDiscount > 0) {
+      html += `<div class="quote-ref-box" style="margin-top:4px">
+        <span class="ref-label">총 초기 비용 (선납금 + 1개월)</span>
+        <span class="ref-value">${fmtPrice(finalDeposit + totalMonthly)}</span>
+      </div>`;
+    }
+
+  } else {
+    // ===== LUMPSUM =====
+    const unitPrice = base.price + base.standPrice;
+    const subtotal = unitPrice * qty;
+    const totalDiscount = promoDisc + qtyDisc;
+    const finalTotal = subtotal - totalDiscount;
+
+    heroWrap.innerHTML = '';
+
+    if (state.customerName || state.customerCompany) {
+      html += `<div class="quote-section">
+        <div class="quote-section-title">고객 정보</div>`;
+      if (state.customerName) html += `<div class="quote-row"><span class="ql">고객명</span><span class="qv">${state.customerName}</span></div>`;
+      if (state.customerCompany) html += `<div class="quote-row"><span class="ql">업체명</span><span class="qv">${state.customerCompany}</span></div>`;
+      html += `</div>`;
+    }
+
+    html += `<div class="quote-section">
+      <div class="quote-section-title">제품 정보</div>
+      <div class="quote-row"><span class="ql">제품명</span><span class="qv">${productLabel}</span></div>
+      <div class="quote-row"><span class="ql">결제방식</span><span class="qv">일시불</span></div>
+      <div class="quote-row"><span class="ql">수량</span><span class="qv">${qty}대</span></div>
+    </div>`;
+    html += specHtml();
+
+    html += `<div class="quote-section">
+      <div class="quote-section-title">금액 내역</div>
+      <div class="quote-row"><span class="ql">제품가 (벽걸이, 1대)</span><span class="qv">${fmtPrice(base.price)}</span></div>`;
+    if (base.standPrice > 0) {
+      html += `<div class="quote-row"><span class="ql">${base.standLabel}</span><span class="qv">+ ${fmtPrice(base.standPrice)}</span></div>`;
+      html += `<div class="quote-row"><span class="ql">1대 합계</span><span class="qv">${fmtPrice(unitPrice)}</span></div>`;
+    }
+    if (qty > 1) html += `<div class="quote-row"><span class="ql">소계 (${qty}대)</span><span class="qv">${fmtPrice(subtotal)}</span></div>`;
+    if (promoDisc > 0) html += `<div class="quote-row discount"><span class="ql">프로모션 할인</span><span class="qv">−${fmtPrice(promoDisc)}</span></div>`;
+    if (qtyDisc > 0) html += `<div class="quote-row discount"><span class="ql">수량 추가할인 (2대 이상)</span><span class="qv">−${fmtPrice(qtyDisc)}</span></div>`;
+    html += `</div>`;
+
+    if (state.freebies.size > 0) {
+      html += `<div class="quote-section">
+        <div class="quote-section-title">추가증정</div>`;
+      [...state.freebies].forEach(f => {
+        html += `<div class="quote-row free-item"><span class="ql">${f}</span><span class="qv">무료 증정</span></div>`;
+      });
+      html += `</div>`;
+    }
+
+    if (state.promos.size > 0) {
+      html += `<div class="promo-tags" style="margin-bottom:12px">${[...state.promos].map(p => `<span class="promo-tag">${p}</span>`).join('')}</div>`;
+    }
+
+    html += `<div class="quote-total-box">
+      <div>
+        <div class="total-label">최종 견적가</div>
+        <div class="total-sub">유효기간: ${validUntil.toLocaleDateString('ko-KR')}까지</div>
+      </div>
+      <div style="text-align:right">
+        <div class="total-amount">${fmtPrice(finalTotal)}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.75)">${state.freebies.has('VAT') ? 'VAT 포함' : 'VAT 별도'}</div>
+      </div>
+    </div>`;
+  }
+
+  heroWrap.innerHTML = hero;
+  body.innerHTML = html;
+  actions.style.display = '';
+}
+
+// ==================== EXPORT ====================
+function buildProductLabel() {
+  if (state.paymentType === 'lumpsum') {
+    return state.lumpsumStand !== 'none' ? `${state.model} + ${state.lumpsumStand}` : `${state.model} 벽걸이형`;
+  }
+  const optStr = state.optionLabel !== '벽걸이' ? ` + ${state.optionLabel}` : ' 벽걸이형';
+  return `${state.model}${optStr}`;
+}
+
+function exportPDF() {
+  const base = getBasePrice();
+  if (!base) { alert('견적 정보를 모두 입력해주세요.'); return; }
+  const qId = saveCurrentQuote(true);
+  if (qId) {
+    document.getElementById('qId').textContent = '견적번호: ' + qId;
+  }
+  setTimeout(() => window.print(), 120);
+}
+
+function saveCurrentQuote(silent = false) {
+  const base = getBasePrice();
+  if (!base) { if (!silent) alert('견적 정보를 모두 입력해주세요.'); return null; }
+  const promoDisc = state.promos.size > 0 ? 100000 : 0;
+  const qtyDisc = state.quantity >= 2 ? 100000 : 0;
+  const qty = state.quantity;
+  const depositPerUnit = state.deposit || 0;
+  const depositSubtotal = depositPerUnit * qty;
+  const finalDeposit = Math.max(0, depositSubtotal - promoDisc - qtyDisc);
+
+  const finalAmount = base.type === 'rental'
+    ? base.total * qty  // 총납입료 기준
+    : (base.price * qty) - promoDisc - qtyDisc;
+
+  const qId = saveQuote({
+    userId: session.id, userName: session.name, role: session.role,
+    customerName: state.customerName, customerCompany: state.customerCompany,
+    productLabel: buildProductLabel(),
+    series: state.series, model: state.model, optionLabel: state.optionLabel,
+    paymentType: state.paymentType,
+    deposit: state.deposit, months: state.months,
+    quantity: qty,
+    monthlyPrice: base.type === 'rental' ? base.monthly * qty : null,
+    baseTotal: base.type === 'rental' ? base.total : base.price,
+    finalDeposit: finalDeposit,
+    finalAmount: finalAmount,
+    promotions: [...state.promos],
+    freebies: [...state.freebies]
+  });
+  if (!silent) alert(`견적이 저장되었습니다.\n견적번호: ${qId}`);
+  return qId;
+}
+
+// ==================== QUOTE HISTORY MODAL ====================
+function openHistory() {
+  const modal = document.getElementById('historyModal');
+  const content = document.getElementById('historyContent');
+  modal.classList.add('open');
+
+  let quotes = getQuotes();
+  // 직원은 본인 견적만, 관리자는 전체
+  if (session.role === 'employee') {
+    quotes = quotes.filter(q => q.userId === session.id);
+  }
+
+  if (!quotes.length) {
+    content.innerHTML = '<div class="modal-empty">저장된 견적이 없습니다</div>';
+    return;
+  }
+
+  const rows = quotes.slice(0, 200).map(q => {
+    const payLabel = q.paymentType === 'rental'
+      ? `렌탈 ${q.months}개월`
+      : '일시불';
+    const roleTag = session.role === 'admin'
+      ? `<span class="role-badge ${q.role}" style="font-size:10px;margin-left:4px">${q.role === 'admin' ? '관리자' : '직원'}</span>`
+      : '';
+    return `<tr>
+      <td><code style="font-size:11px">${q.quoteId}</code></td>
+      <td style="font-size:12px">${fmtDateTime(q.timestamp)}</td>
+      ${session.role === 'admin' ? `<td>${q.userName}${roleTag}</td>` : ''}
+      <td>${q.customerName || '—'}${q.customerCompany ? `<br><span style="font-size:11px;color:#888">${q.customerCompany}</span>` : ''}</td>
+      <td style="font-size:12px">${q.productLabel}</td>
+      <td style="font-size:12px">${payLabel}</td>
+      <td style="font-weight:700;color:var(--primary)">${fmtPrice(q.finalAmount)}</td>
+    </tr>`;
+  }).join('');
+
+  const adminCol = session.role === 'admin' ? '<th>담당자</th>' : '';
+  content.innerHTML = `
+    <p style="font-size:12px;color:#888;margin-bottom:12px">총 ${quotes.length}건${session.role === 'admin' ? ' (전체)' : ' (내 견적)'}</p>
+    <table class="history-table">
+      <thead><tr>
+        <th>견적번호</th><th>저장일시</th>${adminCol}
+        <th>고객</th><th>제품</th><th>결제방식</th><th>최종금액</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function closeHistory() {
+  document.getElementById('historyModal').classList.remove('open');
+}
+
+init();
+</script>
+</body>
+</html>

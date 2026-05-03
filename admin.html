@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>관리자 페이지 — 현대아이티</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="nav-brand">
+    <span class="nav-brand-main">현대아이티</span>
+    <span class="nav-brand-sub">HYUNDAI IT · 관리자</span>
+  </div>
+  <div class="topnav-right">
+    <a href="sales.html" class="topnav-link">견적 작성</a>
+    <span class="topnav-user">관리자: <span id="navUserName"></span></span>
+    <button class="btn-logout" onclick="logout()">로그아웃</button>
+  </div>
+</nav>
+
+<div class="admin-wrap">
+
+  <!-- 통계 카드 -->
+  <div class="stats-grid" id="statsGrid"></div>
+
+  <!-- 탭 -->
+  <div class="admin-tabs">
+    <button class="admin-tab active" onclick="switchTab('users')">계정 관리</button>
+    <button class="admin-tab" onclick="switchTab('logs')">로그인 이력</button>
+    <button class="admin-tab" onclick="switchTab('quotes')">견적 이력</button>
+  </div>
+
+  <!-- ===== 계정 관리 탭 ===== -->
+  <div class="tab-panel active" id="tab-users">
+
+    <!-- 관리자 계정 -->
+    <div class="admin-card">
+      <div class="admin-card-title"><span>👑</span> 관리자 계정</div>
+      <div class="add-user-form" id="addAdminForm">
+        <div><label style="font-size:12px;color:#555;display:block;margin-bottom:3px">아이디</label><input type="text" id="adminId" placeholder="아이디"></div>
+        <div><label style="font-size:12px;color:#555;display:block;margin-bottom:3px">비밀번호</label><input type="password" id="adminPw" placeholder="비밀번호"></div>
+        <div><label style="font-size:12px;color:#555;display:block;margin-bottom:3px">이름</label><input type="text" id="adminName" placeholder="이름"></div>
+        <div style="display:flex;align-items:flex-end"><span style="background:#fce4ec;color:#c62828;border-radius:6px;padding:8px 12px;font-size:12px;font-weight:600;white-space:nowrap">관리자</span></div>
+        <div style="display:flex;align-items:flex-end"><button class="btn-add" onclick="addUser('admin')">추가</button></div>
+      </div>
+      <div id="adminError" style="display:none;color:#c62828;font-size:12px;margin-bottom:8px"></div>
+      <table class="user-table">
+        <thead><tr><th>아이디</th><th>이름</th><th>구분</th><th>생성일</th><th>생성자</th><th></th></tr></thead>
+        <tbody id="adminTableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- 직원 계정 -->
+    <div class="admin-card">
+      <div class="admin-card-title"><span>👤</span> 직원 계정</div>
+      <div class="add-user-form">
+        <div><label style="font-size:12px;color:#555;display:block;margin-bottom:3px">아이디</label><input type="text" id="empId" placeholder="아이디"></div>
+        <div><label style="font-size:12px;color:#555;display:block;margin-bottom:3px">비밀번호</label><input type="password" id="empPw" placeholder="비밀번호"></div>
+        <div><label style="font-size:12px;color:#555;display:block;margin-bottom:3px">이름</label><input type="text" id="empName" placeholder="이름"></div>
+        <div style="display:flex;align-items:flex-end"><span style="background:#e3f2fd;color:#1565c0;border-radius:6px;padding:8px 12px;font-size:12px;font-weight:600;white-space:nowrap">직원</span></div>
+        <div style="display:flex;align-items:flex-end"><button class="btn-add" onclick="addUser('employee')">추가</button></div>
+      </div>
+      <div id="empError" style="display:none;color:#c62828;font-size:12px;margin-bottom:8px"></div>
+      <table class="user-table">
+        <thead><tr><th>아이디</th><th>이름</th><th>구분</th><th>생성일</th><th>생성자</th><th></th></tr></thead>
+        <tbody id="empTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== 로그인 이력 탭 ===== -->
+  <div class="tab-panel" id="tab-logs">
+    <div class="admin-card">
+      <div class="admin-card-title"><span>📋</span> 로그인 이력</div>
+      <div class="filter-row">
+        <select id="logRoleFilter" onchange="renderLogTable()">
+          <option value="">전체 구분</option>
+          <option value="admin">관리자</option>
+          <option value="employee">직원</option>
+        </select>
+        <select id="logTypeFilter" onchange="renderLogTable()">
+          <option value="">전체 유형</option>
+          <option value="login">로그인</option>
+          <option value="logout">로그아웃</option>
+        </select>
+        <input type="text" id="logUserFilter" placeholder="이름/아이디 검색" oninput="renderLogTable()" style="width:160px">
+        <span id="logCount" style="font-size:12px;color:#888;margin-left:auto"></span>
+      </div>
+      <table class="log-table">
+        <thead><tr><th>일시</th><th>아이디</th><th>이름</th><th>구분</th><th>유형</th></tr></thead>
+        <tbody id="logTableBody"></tbody>
+      </table>
+      <div id="logEmpty" style="display:none;text-align:center;padding:32px;color:#aaa">이력이 없습니다</div>
+    </div>
+  </div>
+
+  <!-- ===== 견적 이력 탭 ===== -->
+  <div class="tab-panel" id="tab-quotes">
+    <div class="admin-card">
+      <div class="admin-card-title"><span>📊</span> 견적 이력</div>
+      <div class="filter-row">
+        <select id="qRoleFilter" onchange="renderQuoteTable()">
+          <option value="">전체 구분</option>
+          <option value="admin">관리자</option>
+          <option value="employee">직원</option>
+        </select>
+        <input type="text" id="qUserFilter" placeholder="이름/아이디 검색" oninput="renderQuoteTable()" style="width:160px">
+        <input type="text" id="qProductFilter" placeholder="제품명 검색" oninput="renderQuoteTable()" style="width:160px">
+        <span id="qCount" style="font-size:12px;color:#888;margin-left:auto"></span>
+      </div>
+      <table class="log-table">
+        <thead><tr><th>견적번호</th><th>일시</th><th>담당자</th><th>고객</th><th>제품</th><th>결제</th><th>최종금액</th></tr></thead>
+        <tbody id="quoteTableBody"></tbody>
+      </table>
+      <div id="quoteEmpty" style="display:none;text-align:center;padding:32px;color:#aaa">견적 이력이 없습니다</div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    © 2026 현대아이티. All rights reserved.<br>
+    개발: 전략유통사업본부 &nbsp;|&nbsp; 문의: kjhyun@hyundaiit.com
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script>
+const session = requireAuth('admin');
+if (session) document.getElementById('navUserName').textContent = session.name;
+
+// ==================== TABS ====================
+function switchTab(tab) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  event.target.classList.add('active');
+  if (tab === 'logs') renderLogTable();
+  if (tab === 'quotes') renderQuoteTable();
+}
+
+// ==================== STATS ====================
+function renderStats() {
+  const users = getUsers();
+  const quotes = getQuotes();
+  const logs = getLogs();
+  const todayStr = new Date().toLocaleDateString('ko-KR');
+  const todayLogins = logs.filter(l => l.type === 'login' && new Date(l.timestamp).toLocaleDateString('ko-KR') === todayStr).length;
+
+  const grid = document.getElementById('statsGrid');
+  grid.innerHTML = `
+    <div class="stat-card"><div class="stat-num">${users.filter(u=>u.role==='admin').length}</div><div class="stat-label">관리자 계정 수</div></div>
+    <div class="stat-card"><div class="stat-num">${users.filter(u=>u.role==='employee').length}</div><div class="stat-label">직원 계정 수</div></div>
+    <div class="stat-card"><div class="stat-num">${quotes.length}</div><div class="stat-label">총 견적 발행 수</div></div>
+  `;
+}
+
+// ==================== USER TABLES ====================
+function renderUserTables() {
+  const users = getUsers();
+  const admins = users.filter(u => u.role === 'admin');
+  const emps = users.filter(u => u.role === 'employee');
+
+  document.getElementById('adminTableBody').innerHTML = admins.map(u => `
+    <tr>
+      <td><code>${u.id}</code></td>
+      <td>${u.name}</td>
+      <td><span class="role-badge admin">관리자</span></td>
+      <td>${fmtDate(u.createdAt)}</td>
+      <td>${u.createdBy === 'system' ? '시스템' : u.createdBy}</td>
+      <td>${u.id === 'hditadmin' ? '<span style="color:#aaa;font-size:12px">삭제불가</span>' : `<button class="btn-del" onclick="removeUser('${u.id}')">삭제</button>`}</td>
+    </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:#aaa;padding:20px">관리자 계정이 없습니다</td></tr>';
+
+  document.getElementById('empTableBody').innerHTML = emps.map(u => `
+    <tr>
+      <td><code>${u.id}</code></td>
+      <td>${u.name}</td>
+      <td><span class="role-badge employee">직원</span></td>
+      <td>${fmtDate(u.createdAt)}</td>
+      <td>${u.createdBy}</td>
+      <td><button class="btn-del" onclick="removeUser('${u.id}')">삭제</button></td>
+    </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:#aaa;padding:20px">직원 계정이 없습니다</td></tr>';
+}
+
+function addUser(role) {
+  const isAdmin = role === 'admin';
+  const id = document.getElementById(isAdmin ? 'adminId' : 'empId').value.trim();
+  const pw = document.getElementById(isAdmin ? 'adminPw' : 'empPw').value;
+  const name = document.getElementById(isAdmin ? 'adminName' : 'empName').value.trim();
+  const errEl = document.getElementById(isAdmin ? 'adminError' : 'empError');
+  const result = createUser(id, pw, name, role, session.id);
+  if (!result.success) {
+    errEl.textContent = result.message; errEl.style.display = '';
+    return;
+  }
+  errEl.style.display = 'none';
+  document.getElementById(isAdmin ? 'adminId' : 'empId').value = '';
+  document.getElementById(isAdmin ? 'adminPw' : 'empPw').value = '';
+  document.getElementById(isAdmin ? 'adminName' : 'empName').value = '';
+  renderUserTables();
+  renderStats();
+}
+
+function removeUser(id) {
+  if (!confirm(`'${id}' 계정을 삭제하시겠습니까?`)) return;
+  const result = deleteUser(id);
+  if (!result.success) { alert(result.message); return; }
+  renderUserTables();
+  renderStats();
+}
+
+// ==================== LOG TABLE ====================
+function renderLogTable() {
+  const roleFilter = document.getElementById('logRoleFilter').value;
+  const typeFilter = document.getElementById('logTypeFilter').value;
+  const userFilter = document.getElementById('logUserFilter').value.toLowerCase();
+
+  let logs = getLogs().filter(l => l.type === 'login' || l.type === 'logout');
+  if (roleFilter) logs = logs.filter(l => l.role === roleFilter);
+  if (typeFilter) logs = logs.filter(l => l.type === typeFilter);
+  if (userFilter) logs = logs.filter(l => (l.userId||'').toLowerCase().includes(userFilter) || (l.userName||'').toLowerCase().includes(userFilter));
+
+  document.getElementById('logCount').textContent = `총 ${logs.length}건`;
+  const tbody = document.getElementById('logTableBody');
+  const empty = document.getElementById('logEmpty');
+
+  if (!logs.length) {
+    tbody.innerHTML = ''; empty.style.display = ''; return;
+  }
+  empty.style.display = 'none';
+  tbody.innerHTML = logs.slice(0, 200).map(l => `
+    <tr>
+      <td>${fmtDateTime(l.timestamp)}</td>
+      <td><code>${l.userId}</code></td>
+      <td>${l.userName}</td>
+      <td><span class="role-badge ${l.role}">${l.role === 'admin' ? '관리자' : '직원'}</span></td>
+      <td><span class="log-type-badge ${l.type}">${l.type === 'login' ? '로그인' : '로그아웃'}</span></td>
+    </tr>`).join('');
+}
+
+// ==================== QUOTE TABLE ====================
+function renderQuoteTable() {
+  const roleFilter = document.getElementById('qRoleFilter').value;
+  const userFilter = document.getElementById('qUserFilter').value.toLowerCase();
+  const prodFilter = document.getElementById('qProductFilter').value.toLowerCase();
+
+  let quotes = getQuotes();
+  if (roleFilter) quotes = quotes.filter(q => q.role === roleFilter);
+  if (userFilter) quotes = quotes.filter(q => (q.userId||'').toLowerCase().includes(userFilter) || (q.userName||'').toLowerCase().includes(userFilter));
+  if (prodFilter) quotes = quotes.filter(q => (q.productLabel||'').toLowerCase().includes(prodFilter));
+
+  document.getElementById('qCount').textContent = `총 ${quotes.length}건`;
+  const tbody = document.getElementById('quoteTableBody');
+  const empty = document.getElementById('quoteEmpty');
+
+  if (!quotes.length) {
+    tbody.innerHTML = ''; empty.style.display = ''; return;
+  }
+  empty.style.display = 'none';
+  tbody.innerHTML = quotes.slice(0, 200).map(q => `
+    <tr>
+      <td><code style="font-size:11px">${q.quoteId}</code></td>
+      <td style="font-size:12px">${fmtDateTime(q.timestamp)}</td>
+      <td>${q.userName} <span class="role-badge ${q.role}" style="font-size:10px">${q.role === 'admin' ? '관리자' : '직원'}</span></td>
+      <td>${q.customerName || '—'}${q.customerCompany ? '<br><span style="font-size:11px;color:#888">'+q.customerCompany+'</span>' : ''}</td>
+      <td style="font-size:12px">${q.productLabel}</td>
+      <td style="font-size:12px">${q.paymentType === 'rental' ? `렌탈 ${q.months}개월` : '일시불'}</td>
+      <td style="font-weight:600;color:var(--primary)">${fmtPrice(q.finalAmount)}</td>
+    </tr>`).join('');
+}
+
+// ==================== INIT ====================
+renderStats();
+renderUserTables();
+</script>
+</body>
+</html>
