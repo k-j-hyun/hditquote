@@ -11,6 +11,10 @@ ps : hditsmart
 id : hditadmin02
 ps : hditsmart
 
+5.이름 : 유기풍
+id : hditcommand
+ps : hditsmart
+
 직원 List
 1.이름 : 고정현
 id : hdit01

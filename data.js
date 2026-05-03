@@ -5,6 +5,7 @@ const DEFAULT_ACCOUNTS = [
   { id: 'hditadmin',   password: 'hditsmart', name: '양진우',   role: 'admin',    createdAt: '2026-01-01T00:00:00.000Z', createdBy: 'system' },
   { id: 'hditadmin01', password: 'hditsmart', name: '전종원',   role: 'admin',    createdAt: '2026-01-01T00:00:00.000Z', createdBy: 'system' },
   { id: 'hditadmin02', password: 'hditsmart', name: '박진호',   role: 'admin',    createdAt: '2026-01-01T00:00:00.000Z', createdBy: 'system' },
+  { id: 'hditcommand', password: 'hditsmart', name: '유기풍',   role: 'admin',    createdAt: '2026-01-01T00:00:00.000Z', createdBy: 'system' },
   // 직원
   { id: 'hdit01',       password: '1111',     name: '고정현',   role: 'employee', createdAt: '2026-01-01T00:00:00.000Z', createdBy: 'system' },
   { id: 'hdit02',       password: '1111',     name: '김성규',   role: 'employee', createdAt: '2026-01-01T00:00:00.000Z', createdBy: 'system' },
