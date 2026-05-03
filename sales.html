@@ -79,7 +79,7 @@
         <label>엘리베이터</label>
         <div class="radio-group">
           <div class="radio-btn">
-            <input type="radio" name="elevator" id="elevNone" value="" checked>
+            <input type="radio" name="elevator" id="elevNone" value="" checked onchange="state.elevator='';renderQuote()">
             <label for="elevNone">미선택</label>
           </div>
           <div class="radio-btn">
@@ -275,6 +275,7 @@ if (session) {
 // ==================== STATE ====================
 const state = {
   customerName: '', customerCompany: '',
+  birthdate: '', email: '', address: '', elevator: '',
   paymentType: 'rental',
   series: '', model: '', optionLabel: '벽걸이',
   deposit: null, months: null,
@@ -513,7 +514,22 @@ function renderQuote() {
   const optStr = state.paymentType === 'rental'
     ? (state.optionLabel !== '벽걸이' ? ` + ${state.optionLabel}` : ' 벽걸이형')
     : (state.lumpsumStand !== 'none' ? ` + ${state.lumpsumStand}` : ' 벽걸이형');
-  const productLabel = `Samsung ${state.model}${optStr}`;
+  const productLabel = `Hyundai IT ${state.model}${optStr}`;
+
+  // 고객 정보 섹션
+  function customerInfoHtml() {
+    const { customerName: n, customerCompany: c, birthdate: b, email: e, address: a, elevator: el } = state;
+    if (!n && !c && !b && !e && !a && !el) return '';
+    let h = `<div class="quote-section"><div class="quote-section-title">고객 정보</div>`;
+    if (n)  h += `<div class="quote-row"><span class="ql">고객명</span><span class="qv">${n}</span></div>`;
+    if (c)  h += `<div class="quote-row"><span class="ql">업체명</span><span class="qv">${c}</span></div>`;
+    if (b)  h += `<div class="quote-row"><span class="ql">생년월일</span><span class="qv">${b}</span></div>`;
+    if (e)  h += `<div class="quote-row"><span class="ql">이메일</span><span class="qv">${e}</span></div>`;
+    if (a)  h += `<div class="quote-row"><span class="ql">설치 주소</span><span class="qv">${a}</span></div>`;
+    if (el) h += `<div class="quote-row"><span class="ql">엘리베이터</span><span class="qv">${el}</span></div>`;
+    h += `</div>`;
+    return h;
+  }
 
   // 제품 사양 섹션 (데이터 있는 모델만)
   function specHtml() {
@@ -553,13 +569,7 @@ function renderQuote() {
     </div>`;
 
     // 고객 정보
-    if (state.customerName || state.customerCompany) {
-      html += `<div class="quote-section">
-        <div class="quote-section-title">고객 정보</div>`;
-      if (state.customerName) html += `<div class="quote-row"><span class="ql">고객명</span><span class="qv">${state.customerName}</span></div>`;
-      if (state.customerCompany) html += `<div class="quote-row"><span class="ql">업체명</span><span class="qv">${state.customerCompany}</span></div>`;
-      html += `</div>`;
-    }
+    html += customerInfoHtml();
 
     // 제품 정보
     html += `<div class="quote-section">
@@ -632,14 +642,7 @@ function renderQuote() {
     const finalTotal = subtotal - totalDiscount;
 
     heroWrap.innerHTML = '';
-
-    if (state.customerName || state.customerCompany) {
-      html += `<div class="quote-section">
-        <div class="quote-section-title">고객 정보</div>`;
-      if (state.customerName) html += `<div class="quote-row"><span class="ql">고객명</span><span class="qv">${state.customerName}</span></div>`;
-      if (state.customerCompany) html += `<div class="quote-row"><span class="ql">업체명</span><span class="qv">${state.customerCompany}</span></div>`;
-      html += `</div>`;
-    }
+    html += customerInfoHtml();
 
     html += `<div class="quote-section">
       <div class="quote-section-title">제품 정보</div>
@@ -727,6 +730,8 @@ function saveCurrentQuote(silent = false) {
   const qId = saveQuote({
     userId: session.id, userName: session.name, role: session.role,
     customerName: state.customerName, customerCompany: state.customerCompany,
+    birthdate: state.birthdate, email: state.email,
+    address: state.address, elevator: state.elevator,
     productLabel: buildProductLabel(),
     series: state.series, model: state.model, optionLabel: state.optionLabel,
     paymentType: state.paymentType,
